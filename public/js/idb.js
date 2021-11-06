@@ -1,9 +1,15 @@
+const indexedDB = 
+  window.indexedDB || 
+  window.mozIndexedDB || 
+  window.webkitIndexDB || 
+  window.msIndexDB || 
+  window.shimIndexDB;
 let db;
 const request = indexedDB.open('budget', 1);
 
 request.onupgradeneeded = function(event) {
-  const db = event.target.result;
-  db.createObjectStore('new_transaction', { autoIncrement: true });
+  let db = event.target.result;
+  db.createObjectStore('pending', { autoIncrement: true });
 };
 
 request.onsuccess = function(event) {
@@ -22,9 +28,9 @@ request.onerror = function(event) {
 };
 
 function saveRecord(record) {
-  const transaction = db.transaction(['new_transaction'], 'readwrite');
+  const transaction = db.transaction(['pending'], 'readwrite');
 
-  const budgetObjectStore = transaction.objectStore('new_transaction');
+  const budgetObjectStore = transaction.objectStore('pending');
 
   // add record to your store with add method.
   budgetObjectStore.add(record);
@@ -32,10 +38,10 @@ function saveRecord(record) {
 
 function uploadTransaction() {
   // open a transaction on your pending db
-  const transaction = db.transaction(['new_transaction'], 'readwrite');
+  const transaction = db.transaction(['pending'], 'readwrite');
 
   // access your pending object store
-  const budgetObjectStore = transaction.objectStore('new_transaction');
+  const budgetObjectStore = transaction.objectStore('pending');
 
   // get all records from store and set to a variable
   const getAll = budgetObjectStore.getAll();
@@ -43,7 +49,7 @@ function uploadTransaction() {
   getAll.onsuccess = function() {
     // if there was data in indexedDb's store, let's send it to the api server
     if (getAll.result.length > 0) {
-      fetch('/api/transaction', {
+      fetch('/api/transaction/bulk', {
         method: 'POST',
         body: JSON.stringify(getAll.result),
         headers: {
@@ -57,10 +63,10 @@ function uploadTransaction() {
             throw new Error(serverResponse);
           }
 
-          const transaction = db.transaction(['new_transaction'], 'readwrite');
-          const budgetObjectStore = transaction.objectStore('new_transaction');
+          const transaction = db.transaction(['pending'], 'readwrite');
+          const budgetObjectStore = transaction.objectStore('pending');
           // clear all transactions in your store
-          transactionObjectStore.clear();
+          budgetObjectStore.clear();
         })
         .catch(err => {
           // set reference to redirect back here
