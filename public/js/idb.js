@@ -35,15 +35,15 @@ function uploadTransaction() {
   const transaction = db.transaction(['new_transaction'], 'readwrite');
 
   // access your pending object store
-  const transactionObjectStore = transaction.objectStore('new_transaction');
+  const budgetObjectStore = transaction.objectStore('new_transaction');
 
   // get all records from store and set to a variable
-  const getAll = transactionObjectStore.getAll();
+  const getAll = budgetObjectStore.getAll();
 
   getAll.onsuccess = function() {
     // if there was data in indexedDb's store, let's send it to the api server
     if (getAll.result.length > 0) {
-      fetch('/api/transactions', {
+      fetch('/api/transaction', {
         method: 'POST',
         body: JSON.stringify(getAll.result),
         headers: {
@@ -58,7 +58,7 @@ function uploadTransaction() {
           }
 
           const transaction = db.transaction(['new_transaction'], 'readwrite');
-          const transactionObjectStore = transaction.objectStore('new_transaction');
+          const budgetObjectStore = transaction.objectStore('new_transaction');
           // clear all transactions in your store
           transactionObjectStore.clear();
         })
